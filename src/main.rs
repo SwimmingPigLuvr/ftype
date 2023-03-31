@@ -2,22 +2,53 @@ use rand::seq::SliceRandom;
 use std::io::{stdin, stdout, Write};
 use textwrap::fill;
 use time::Instant;
+use owo_colors::OwoColorize;
+use strsim::{jaro_winkler, damerau_levenshtein};
 
 fn calculate_accuracy(sentence: &str, input: &str) -> f64 {
-    let sentence_chars = sentence.chars().collect::<Vec<char>>();
-    let input_chars = input.chars().collect::<Vec<char>>();
-    let mut correct_chars = 0;
+    let similarity = jaro_winkler(sentence, input);
+    similarity * 100.0
+}
 
-    for (i, input_char) in input_chars.iter().enumerate() {
-        if let Some(sentence_char) = sentence_chars.get(i) {
-            if input_char == sentence_char {
-                correct_chars += 1;
+fn highlight_damerau_levenshtein(sentence: &str, input: &str, distance: usize) -> String {
+    let mut sentence_chars = sentence.chars().peekable();
+    let mut input_chars = input.chars().peekable();
+    let mut result = String::new();
+    let mut remaining_distance = distance;
+
+    while sentence_chars.peek().is_some() || input_chars.peek().is_some() {
+        let sentence_char = sentence_chars.peek().cloned();
+        let input_char = input_chars.peek().cloned();
+
+        match (sentence_char, input_char) {
+            (Some(sc), Some(ic)) if sc == ic => {
+                result.push(ic);
+                sentence_chars.next();
+                input_chars.next();
+            }
+            _ => {
+                if remaining_distance > 0 {
+                    if let Some(ic) = input_char {
+                        result.push_str(&ic.red().to_string());
+                    }
+                    input_chars.next();
+                    remaining_distance -= 1;
+                } else {
+                    break;
+                }
             }
         }
     }
 
-    (correct_chars as f64 / sentence_chars.len() as f64) * 100.0
+    result
 }
+
+fn highlight_errors(sentence: &str, input: &str) -> String {
+    let distance = damerau_levenshtein(sentence, input);
+    highlight_damerau_levenshtein(sentence, input, distance)
+}
+
+
 
 fn main() {
     let sentences = vec![
@@ -49,9 +80,13 @@ fn main() {
     let wpm = words / minutes;
 
     let accuracy = calculate_accuracy(&sentence, input.trim());
+    let highlighted_input = highlight_errors(&sentence, input.trim());
 
     println!("\nYour typing speed is {:.2} WPM with {:.2}% accuracy.", wpm, accuracy);
+    println!("\nYour input with errors highlighted in red:");
+    println!("{}", highlighted_input);
 }
+
 
 
 

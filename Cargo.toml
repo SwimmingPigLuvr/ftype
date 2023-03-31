@@ -6,6 +6,8 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+owo-colors = "3.5.0"
 rand = "0.8.5"
+strsim = "0.10.0"
 textwrap = "0.16.0"
 time = "0.3.20"
