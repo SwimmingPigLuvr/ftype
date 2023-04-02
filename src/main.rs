@@ -44,8 +44,19 @@ fn highlight_damerau_levenshtein(sentence: &str, input: &str, distance: usize) -
 }
 
 fn highlight_errors(sentence: &str, input: &str) -> String {
-    let distance = damerau_levenshtein(sentence, input);
-    highlight_damerau_levenshtein(sentence, input, distance)
+    let sentence_chars = sentence.chars().collect::<Vec<_>>();
+    let input_chars = input.chars().collect::<Vec<_>>();
+    let mut result = String::new();
+
+    for i in 0..input_chars.len() {
+        if i < sentence_chars.len() && input_chars[i] == sentence_chars[i] {
+            result.push(input_chars[i]);
+        } else {
+            result.push_str(&input_chars[i].red().to_string());
+        }
+    }
+
+    result
 }
 
 
